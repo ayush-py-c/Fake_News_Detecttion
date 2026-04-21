@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>The Veritas Gazette — Fake News Detector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IM+Fell+English:ital@0;1&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+
+<style>
+:root {
+  --paper: #f5f0e8;
+  --paper-dark: #e8e0cc;
+  --ink: #1a1208;
+  --ink-light: #3d3018;
+  --rust: #8b2500;
+  --gold: #c8960c;
+  --muted: #6b5c3e;
+  --rule: #2a1e0a;
+  --col-gap: 20px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #c9b99a;
+  font-family: 'Libre Baskerville', Georgia, serif;
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* ── PAPER TEXTURE ── */
+.newspaper {
+  background: var(--paper);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0;
+  box-shadow: 4px 6px 30px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.newspaper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgba(100,80,40,0.04) 27px,
+      rgba(100,80,40,0.04) 28px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── MASTHEAD ── */
+.masthead {
+  border-bottom: 3px double var(--rule);
+  padding: 16px 24px 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.masthead-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-family: 'Libre Baskerville', serif;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 4px;
+}
+
+.masthead-meta span { margin: 0 6px; }
+
+.masthead-title {
+  text-align: center;
+  padding: 10px 0 6px;
+}
+
+.masthead-title h1 {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: clamp(36px, 7vw, 72px);
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.masthead-title .tagline {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  margin-top: 3px;
+}
+
+.masthead-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--rule);
+  padding-top: 6px;
+  margin-top: 6px;
+}
+
+.edition-badge {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.price-tag {
+  font-family: 'Playfair Display', serif;
+  font-size: 10px;
+  border: 1px solid var(--rule);
+  padding: 1px 8px;
+  color: var(--ink);
+}
+
+/* ── NAV ── */
+.nav-bar {
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.nav-bar a {
+  color: var(--paper);
+  text-decoration: none;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border-right: 1px solid rgba(255,255,255,0.15);
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 700;
+  transition: background 0.15s;
+}
+.nav-bar a:hover { background: rgba(255,255,255,0.12); }
+.nav-bar a.active { color: var(--gold); }
+
+/* ── MAIN CONTENT ── */
+.paper-body {
+  padding: 0 24px 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── SECTION RULES ── */
+.section-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 12px;
+}
+.section-rule::before,
+.section-rule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+  opacity: 0.4;
+}
+.section-rule span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  font-family: 'Libre Baskerville', serif;
+}
+
+/* ── HEADLINE STORY ── */
+.headline-story {
+  border-bottom: 2px solid var(--rule);
+  padding-bottom: 16px;
+  margin-bottom: 0;
+}
+
+.hed-kicker {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 6px;
+  font-family: 'Libre Baskerville', serif;
+}
+
+.hed-main {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 4.5vw, 44px);
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.hed-deck {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-light);
+  margin-top: 8px;
+  line-height: 1.5;
+  border-left: 2px solid var(--gold);
+  padding-left: 10px;
+}
+
+/* ── COLUMNS ── */
+.columns-2 { columns: 2; column-gap: var(--col-gap); }
+.columns-3 { columns: 3; column-gap: var(--col-gap); }
+
+.col-rule { column-rule: 1px solid rgba(26,18,8,0.2); }
+
+/* ── BODY COPY ── */
+.body-copy {
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: var(--ink-light);
+  text-align: justify;
+  hyphens: auto;
+}
+
+.body-copy p { margin-bottom: 8px; }
+.body-copy p:first-child::first-letter {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 0.8;
+  float: left;
+  margin: 4px 6px -4px 0;
+  color: var(--ink);
+}
+
+/* ── PULL QUOTE ── */
+.pull-quote {
+  break-inside: avoid;
+  border-top: 2px solid var(--rule);
+  border-bottom: 2px solid var(--rule);
+  padding: 10px 12px;
+  margin: 14px 0;
+  text-align: center;
+}
+.pull-quote p {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.pull-quote cite {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 6px;
+  font-style: normal;
+}
+
+/* ── AD BOX ── */
+.ad-box {
+  border: 2px solid var(--rule);
+  padding: 14px;
+  text-align: center;
+  break-inside: avoid;
+  margin: 10px 0;
+  background: rgba(200,150,12,0.05);
+}
+.ad-box .ad-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+.ad-box .ad-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--rust);
+  margin: 4px 0;
+}
+.ad-box .ad-sub {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── NEWS BRIEF ── */
+.brief {
+  border-bottom: 1px dotted rgba(26,18,8,0.25);
+  padding: 8px 0;
+  break-inside: avoid;
+}
+.brief:last-child { border-bottom: none; }
+.brief .brief-hed {
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+.brief .brief-copy {
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.brief .brief-date {
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-top: 2px;
+}
+
+/* ── DIVIDER ── */
+.thick-rule {
+  height: 0;
+  border: none;
+  border-top: 3px double var(--rule);
+  margin: 16px 0;
+}
+.thin-rule {
+  height: 0;
+  border: none;
+  border-top: 1px solid rgba(26,18,8,0.2);
+  margin: 12px 0;
+}
+
+/* ── ANALYZER SECTION ── */
+.analyzer-section {
+  background: rgba(26,18,8,0.03);
+  border: 2px solid var(--rule);
+  padding: 20px;
+  margin-top: 0;
+}
+
+.analyzer-kicker {
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 6px;
+}
+
+.analyzer-hed {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--ink);
+  margin-bottom: 4px;
+  line-height: 1.1;
+}
+
+.analyzer-deck {
+  text-align: center;
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(26,18,8,0.2);
+}
+
+.field-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 6px;
+}
+
+textarea.dispatch {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(26,18,8,0.3);
+  border-radius: 0;
+  font-family: 'Libre Baskerville', serif;
+  font-size: 12px;
+  color: var(--ink);
+  padding: 10px 12px;
+  line-height: 1.7;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+textarea.dispatch:focus {
+  border-color: var(--ink);
+  box-shadow: 2px 2px 0 rgba(26,18,8,0.15);
+}
+textarea.dispatch::placeholder { color: var(--muted); font-style: italic; }
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-analyze {
+  flex: 1;
+  min-width: 140px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  font-family: 'Libre Baskerville', serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
+}
+.btn-analyze:hover { background: var(--rust); }
+.btn-analyze:active { transform: translateY(1px); }
+
+.btn-sample, .btn-clear {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid rgba(26,18,8,0.4);
+  font-family: 'Libre Baskerville', serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-sample:hover, .btn-clear:hover { background: rgba(26,18,8,0.06); }
+
+/* ── VERDICT ── */
+#verdict-wrap {
+  margin-top: 16px;
+  border-top: 3px double var(--rule);
+  padding-top: 14px;
+  display: none;
+  animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+.verdict-stamp {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.stamp-inner {
+  display: inline-block;
+  border: 3px solid currentColor;
+  padding: 6px 22px;
+  transform: rotate(-2deg);
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.stamp-fake { color: #8b0000; }
+.stamp-true { color: #1a4d1a; }
+.stamp-warn { color: #7a4500; }
+
+.verdict-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.verdict-summary {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--ink-light);
+}
+.verdict-summary strong {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.signals-box {
+  border-left: 1px solid rgba(26,18,8,0.2);
+  padding-left: 14px;
+}
+.signals-box strong {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.signal-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  color: var(--ink-light);
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+.signal-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-bad { background: #8b0000; }
+.dot-ok  { background: #1a4d1a; }
+.dot-neu { background: var(--gold); }
+
+/* ── CONFIDENCE BAR ── */
+.conf-section { margin-top: 12px; }
+.conf-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+  font-weight: 700;
+}
+.conf-track {
+  height: 7px;
+  background: rgba(26,18,8,0.1);
+  border: 1px solid rgba(26,18,8,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.conf-fill {
+  height: 100%;
+  width: 0%;
+  transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+.conf-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    rgba(255,255,255,0.2) 3px,
+    rgba(255,255,255,0.2) 6px
+  );
+}
+
+/* ── LOADING ── */
+#loading-wrap {
+  display: none;
+  text-align: center;
+  padding: 20px;
+  margin-top: 16px;
+  border-top: 3px double var(--rule);
+}
+.loading-hed {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.loading-dots {
+  font-size: 20px;
+  letter-spacing: 6px;
+  color: var(--muted);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* ── STATS ROW ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid rgba(26,18,8,0.2);
+  border-bottom: 1px solid rgba(26,18,8,0.2);
+  margin: 12px 0;
+}
+.stat-cell {
+  text-align: center;
+  padding: 8px;
+  border-right: 1px solid rgba(26,18,8,0.15);
+}
+.stat-cell:last-child { border-right: none; }
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1;
+}
+.stat-lbl {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 3px;
+  display: block;
+  font-weight: 700;
+}
+
+/* ── FOOTER ── */
+.paper-footer {
+  background: var(--ink);
+  color: rgba(245,240,232,0.55);
+  text-align: center;
+  padding: 10px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── DECORATIVE ── */
+.ornament {
+  text-align: center;
+  color: var(--gold);
+  font-size: 16px;
+  margin: 4px 0;
+  letter-spacing: 6px;
+  opacity: 0.7;
+}
+
+.byline {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.photo-block {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  filter: sepia(80%) contrast(1.1) brightness(0.92);
+  border: 1px solid rgba(26,18,8,0.2);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.photo-caption {
+  font-size: 9px;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 640px) {
+  .columns-2, .columns-3 { columns: 1; }
+  .verdict-cols { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr; }
+  .stat-cell { border-right: none; border-bottom: 1px solid rgba(26,18,8,0.15); }
+  body { padding: 8px; }
+}
+</style>
+</head>
+<body>
+
+<article class="newspaper">
+
+  <!-- MASTHEAD -->
+  <header class="masthead">
+    <div class="masthead-top">
+      <div class="masthead-meta">
+        <span>Est. MDCCCXLII</span>
+        <span>·</span>
+        <span id="pub-date">Tuesday, April 21, 2026</span>
+      </div>
+      <div class="masthead-meta">
+        <span>Vol. CLXXXIV</span>
+        <span>·</span>
+        <span>No. 111</span>
+      </div>
+    </div>
+
+    <div class="masthead-title">
+      <h1>The Veritas Gazette</h1>
+      <p class="tagline">"All The News Fit To Verify" &mdash; Powered by Artificial Intelligence &amp; Editorial Scrutiny</p>
+    </div>
+
+    <div class="masthead-bottom">
+      <span class="edition-badge">Morning Edition &mdash; Final</span>
+      <span class="price-tag">Price: Free</span>
+      <span class="edition-badge">Artificial Intelligence Desk</span>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav-bar">
+    <a href="#" class="active">Front Page</a>
+    <a href="#">Analysis</a>
+    <a href="#">Fact-Check</a>
+    <a href="#">Technology</a>
+    <a href="#">Archives</a>
+    <a href="#">About</a>
+  </nav>
+
+  <!-- BODY -->
+  <div class="paper-body">
+
+    <!-- TOP SECTION RULE -->
+    <div class="section-rule"><span>Today's Principal Story</span></div>
+
+    <!-- HERO STORY -->
+    <section class="headline-story">
+      <p class="hed-kicker">&#9632; Exclusive Investigation</p>
+      <h2 class="hed-main">Artificial Intelligence Now Capable of Detecting Fabricated Dispatches with Uncanny Precision</h2>
+      <p class="hed-deck">The Veritas Gazette presents its celebrated Neural Correspondent — a machine of singular discernment, trained upon ten thousand verified and spurious reports alike.</p>
+      <div class="ornament">&#10022; &#10022; &#10022;</div>
+      <div class="columns-2 col-rule" style="margin-top:10px;">
+        <div class="body-copy">
+          <p>In an age when false dispatches travel the electric wire with alarming velocity, this publication presents to its distinguished readership a most remarkable apparatus: a mechanical mind trained upon the very grammar of deception.</p>
+          <p>Our correspondents have subjected the device to rigorous examination. Furnished with specimens of both genuine and fabricated reportage, the contraption delivers its verdict with a confidence most striking.</p>
+          <div class="pull-quote">
+            <p>"Veritas non erubescit" — truth does not blush.</p>
+            <cite>Motto of The Veritas Gazette</cite>
+          </div>
+          <p>The instrument catalogues its suspicions methodically: excessive capitalization, the language of conspiracy, appeals to unnamed witnesses, and the telltale absence of verifiable attribution.</p>
+        </div>
+        <div class="body-copy">
+          <p>Readers are cautioned that no mechanical contrivance, however ingeniously wrought, may serve as final arbiter of truth. The device offers its analysis as a preliminary screen — a first lantern cast upon the fog of modern information.</p>
+          <p>Upon the submission of any written dispatch below, the Neural Correspondent shall render judgment: <em>True</em>, <em>False</em>, or <em>Requiring Further Investigation</em> — accompanied by a catalogue of the suspicious elements detected therein.</p>
+          <div class="ad-box">
+            <div class="ad-title">Neural Correspondent</div>
+            <div class="ad-price">96.4%</div>
+            <div class="ad-sub">Documented Accuracy · Est. 2024</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="thick-rule"/>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="stat-num" id="cnt-main">48,291</div>
+        <span class="stat-lbl">Dispatches Examined</span>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num" style="color:var(--rust);" id="fake-main">1,204</div>
+        <span class="stat-lbl">Forgeries Exposed Today</span>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num" style="color:var(--gold);">96.4%</div>
+        <span class="stat-lbl">Verified Accuracy</span>
+      </div>
+    </div>
+
+    <!-- SECTION RULE -->
+    <div class="section-rule"><span>Submit Your Dispatch for Analysis</span></div>
+
+    <!-- ANALYZER -->
+    <section class="analyzer-section">
+      <p class="analyzer-kicker">&#9632; The Neural Correspondent &#9632;</p>
+      <h3 class="analyzer-hed">Dispatch Verification Bureau</h3>
+      <p class="analyzer-deck">Submit any headline or article to be examined by our mechanical truth-seeker for authenticity</p>
+
+      <label class="field-label" for="dispatch-txt">Enter dispatch for examination:</label>
+      <textarea
+        class="dispatch"
+        id="dispatch-txt"
+        placeholder="Paste here the dispatch to be scrutinised — a headline, article, or any reportage you wish verified by our Neural Correspondent..."
+      ></textarea>
+
+      <div class="btn-row">
+        <button class="btn-analyze" onclick="runAnalysis()">&#9632; Submit for Examination</button>
+        <button class="btn-sample" onclick="loadSample()">Sample Dispatch</button>
+        <button class="btn-clear" onclick="clearAll()">Clear Desk</button>
+      </div>
+
+      <!-- LOADING -->
+      <div id="loading-wrap">
+        <p class="loading-hed">Our Neural Correspondent is deliberating upon your submission&hellip;</p>
+        <p class="loading-dots">&#8226; &#8226; &#8226;</p>
+      </div>
+
+      <!-- VERDICT -->
+      <div id="verdict-wrap">
+        <div class="verdict-stamp">
+          <div class="stamp-inner" id="stamp-el"></div>
+        </div>
+
+        <div class="verdict-cols">
+          <div class="verdict-summary">
+            <strong id="verdict-hed"></strong>
+            <span id="verdict-copy"></span>
+            <div class="conf-section">
+              <div class="conf-label">
+                <span>Authenticity Index</span>
+                <span id="conf-pct"></span>
+              </div>
+              <div class="conf-track">
+                <div class="conf-fill" id="conf-bar"></div>
+              </div>
+            </div>
+            <div class="conf-section" style="margin-top:8px;">
+              <div class="conf-label">
+                <span>Model Confidence</span>
+                <span id="model-conf-pct"></span>
+              </div>
+              <div class="conf-track">
+                <div class="conf-fill" id="model-conf-bar"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="signals-box">
+            <strong>Signals Detected by Correspondent</strong>
+            <div id="signals-list"></div>
+          </div>
+        </div>
+
+        <p style="font-size:9px;color:var(--muted);text-align:center;margin-top:12px;font-style:italic;border-top:1px dotted rgba(26,18,8,0.2);padding-top:8px;">
+          This verdict is offered as a preliminary assessment only. The Gazette enjoins its readers to consult multiple sources before forming final opinion.
+        </p>
+      </div>
+    </section>
+
+    <hr class="thick-rule"/>
+
+    <!-- LOWER COLUMNS -->
+    <div class="section-rule"><span>Latest Dispatches</span></div>
+
+    <div class="columns-3 col-rule">
+      <div class="brief">
+        <p class="brief-hed">Scientists Confirm Water Ice Deposits Near Martian South Pole</p>
+        <p class="brief-copy">Researchers at the Jet Propulsion Laboratory have confirmed via spectroscopic analysis the presence of extensive water ice formations beneath the Martian surface.</p>
+        <p class="brief-date">April 21, 2026 &mdash; Science Desk</p>
+      </div>
+      <div class="brief">
+        <p class="brief-hed">Central Bank Holds Rates Steady Amid Inflationary Uncertainty</p>
+        <p class="brief-copy">Monetary authorities voted unanimously to maintain current rates pending further evidence of sustained price stability across commodity and labour markets.</p>
+        <p class="brief-date">April 21, 2026 &mdash; Commerce Desk</p>
+      </div>
+      <div class="brief">
+        <p class="brief-hed">New Species of Deep-Sea Creature Discovered Off Pacific Shelf</p>
+        <p class="brief-copy">Marine biologists aboard the research vessel Endeavour have catalogued a previously unknown bioluminescent organism at depths exceeding 3,000 fathoms.</p>
+        <p class="brief-date">April 21, 2026 &mdash; Natural History</p>
+      </div>
+      <div class="brief">
+        <p class="brief-hed">Parliament Debates Extension of Digital Privacy Statutes</p>
+        <p class="brief-copy">Legislators convened Tuesday to consider amendments broadening existing protections governing the collection and use of personal data by commercial entities.</p>
+        <p class="brief-date">April 21, 2026 &mdash; Political Desk</p>
+      </div>
+      <div class="brief">
+        <p class="brief-hed">Historic Bridge Reopened Following Two Years of Restoration</p>
+        <p class="brief-copy">The century-old Irongate Bridge welcomed pedestrians once more following extensive structural reinforcement, celebrated with a ribbon ceremony at dawn.</p>
+        <p class="brief-date">April 21, 2026 &mdash; City Desk</p>
+      </div>
+      <div class="brief">
+        <p class="brief-hed">Language Model Achieves Near-Human Scores on Medical Licensing Examination</p>
+        <p class="brief-copy">An artificial intelligence system, tested against the standard medical licensure examination, has achieved scores within the top decile of human candidates, researchers report.</p>
+        <p class="brief-date">April 21, 2026 &mdash; Technology Desk</p>
+      </div>
+    </div>
+
+  </div><!-- /paper-body -->
+
+  <!-- FOOTER -->
+  <footer class="paper-footer">
+    The Veritas Gazette &mdash; Est. 1842 &mdash; "All The News Fit To Verify" &mdash; Artificial Intelligence Desk &mdash; All Rights Reserved
+  </footer>
+
+</article>
+
+<script>
+var samples = [
+  "Scientists discover that drinking coffee backwards cures cancer according to leaked Vatican documents suppressed by Big Pharma.",
+  "NASA confirms the Artemis III mission has successfully landed astronauts near the lunar south pole, marking humanity's return to the Moon.",
+  "Government mind control chips found inside COVID-19 vaccines by whistleblower doctors who have now mysteriously disappeared.",
+  "The Federal Reserve raised interest rates by 25 basis points, citing persistent inflation above the 2 percent target and strong labor market conditions.",
+  "BREAKING: Celebrities secretly fund chemtrail aircraft to reduce global population — deep state documents LEAKED showing SHOCKING truth.",
+  "Archaeologists in Egypt have uncovered a previously unknown chamber beneath the Great Sphinx, containing artifacts dating to the Old Kingdom period."
+];
+
+var sampleIdx = 0;
+function loadSample() {
+  document.getElementById('dispatch-txt').value = samples[sampleIdx % samples.length];
+  sampleIdx++;
+  clearVerdict();
+}
+
+function clearAll() {
+  document.getElementById('dispatch-txt').value = '';
+  clearVerdict();
+}
+
+function clearVerdict() {
+  document.getElementById('verdict-wrap').style.display = 'none';
+  document.getElementById('loading-wrap').style.display = 'none';
+}
+
+function runAnalysis() {
+  var txt = document.getElementById('dispatch-txt').value.trim();
+  if (!txt) { alert('Please submit a dispatch for examination.'); return; }
+  clearVerdict();
+  document.getElementById('loading-wrap').style.display = 'block';
+
+  setTimeout(function() {
+    var r = analyse(txt);
+    document.getElementById('loading-wrap').style.display = 'none';
+    renderVerdict(r);
+    var c = parseInt(document.getElementById('cnt-main').textContent.replace(/,/g, ''));
+    document.getElementById('cnt-main').textContent = (c + 1).toLocaleString();
+    if (r.type === 'fake') {
+      var f = parseInt(document.getElementById('fake-main').textContent.replace(/,/g, ''));
+      document.getElementById('fake-main').textContent = (f + 1).toLocaleString();
+    }
+  }, 2000);
+}
+
+function analyse(txt) {
+  var lower = txt.toLowerCase();
+  var fakeTerms = ['secret','leaked','whistleblower','mind control','chemtrail','deep state','hoax','crisis actor','they don\'t want','suppressed','mainstream media','shadow','cabal','microchip','frequencies','big pharma','missing','mysteriously','breaking','shocking','truth','cover','hidden','banned','forbidden','refused','denied'];
+  var trueTerms = ['according to','researchers','study','published','university','official','confirmed','said in a statement','report','data','percent','survey','analysis','laboratory','announced','scientists','biologists','committee','parliament','minister','spokesperson','authorities'];
+  var fScore = 0, tScore = 0;
+  fakeTerms.forEach(function(w) { if (lower.includes(w)) fScore += 1; });
+  trueTerms.forEach(function(w) { if (lower.includes(w)) tScore += 0.9; });
+  var caps = (txt.match(/[A-Z]{3,}/g) || []).length;
+  var excl = (txt.match(/!/g) || []).length;
+  if (caps > 2) fScore += 1.8;
+  if (excl > 1) fScore += 1.2;
+  var words = txt.split(/\s+/).length;
+
+  var signals = [];
+  signals.push({ text: caps > 2 ? 'Excessive capitalisation detected' : 'Capitalization within normal bounds', bad: caps > 2 });
+  signals.push({ text: excl > 1 ? 'Sensational punctuation marks noted' : 'Punctuation appears measured', bad: excl > 1 });
+  signals.push({ text: fScore > 2 ? 'Inflammatory vocabulary present' : 'Language appears neutral', bad: fScore > 2 });
+  signals.push({ text: tScore > 1.5 ? 'Attributed sources cited' : 'Sources absent or anonymous', bad: tScore <= 1.5 });
+  signals.push({ text: words < 12 ? 'Dispatch of suspicious brevity' : 'Dispatch of adequate length', bad: words < 12 });
+  signals.push({ text: lower.includes('secret') || lower.includes('leaked') ? 'Appeals to hidden knowledge' : 'No conspiratorial appeals found', bad: lower.includes('secret') || lower.includes('leaked') });
+
+  var total = fScore + tScore || 1;
+  var fakeProb = fScore / total;
+  var auth = Math.round((1 - fakeProb) * 100);
+  auth = Math.max(5, Math.min(95, auth));
+  var conf = Math.round(Math.min(97, Math.max(52, 50 + Math.abs(fScore - tScore) * 9)));
+
+  var type, label, hed, copy;
+  if (fScore > tScore + 0.5) {
+    type = 'fake'; label = '✕ Suspected Forgery';
+    hed = 'Our Correspondent deems this dispatch highly suspect.';
+    copy = 'Multiple markers of fabrication have been detected. The language employed, the absence of verifiable attribution, and the emotional register of the prose all raise concern. Readers are urged to seek corroboration before crediting this report.';
+  } else if (tScore > fScore + 0.5) {
+    type = 'true'; label = '✓ Likely Authentic';
+    hed = 'Our Correspondent finds this dispatch credible.';
+    copy = 'The submission presents indicators of authentic reportage: measured language, attribution to named or institutional sources, and absence of conspiratorial vocabulary. This verdict does not constitute final certification of truth.';
+  } else {
+    type = 'warn'; label = '? Requires Investigation';
+    hed = 'Our Correspondent cannot render a definitive verdict.';
+    copy = 'The dispatch contains both credible and suspicious elements in roughly equal measure. The Neural Correspondent recommends independent verification through established sources before the dispatch be treated as authoritative.';
+  }
+
+  return { type: type, label: label, hed: hed, copy: copy, auth: auth, conf: conf, signals: signals };
+}
+
+function renderVerdict(r) {
+  var wrap = document.getElementById('verdict-wrap');
+  var stamp = document.getElementById('stamp-el');
+  var stampClasses = { fake: 'stamp-fake', true: 'stamp-true', warn: 'stamp-warn' };
+  var stampTexts = { fake: 'Forgery Suspected', true: 'Authentic', warn: 'Unverified' };
+  var barColors = { fake: '#8b0000', true: '#1a4d1a', warn: '#7a4500' };
+
+  stamp.className = 'stamp-inner ' + stampClasses[r.type];
+  stamp.textContent = stampTexts[r.type];
+
+  document.getElementById('verdict-hed').textContent = r.hed;
+  document.getElementById('verdict-copy').textContent = r.copy;
+  document.getElementById('conf-pct').textContent = r.auth + '%';
+  document.getElementById('model-conf-pct').textContent = r.conf + '%';
+
+  var fill = document.getElementById('conf-bar');
+  fill.style.background = barColors[r.type];
+  fill.style.width = '0%';
+
+  var mfill = document.getElementById('model-conf-bar');
+  mfill.style.background = barColors[r.type];
+  mfill.style.width = '0%';
+
+  var sl = document.getElementById('signals-list');
+  sl.innerHTML = '';
+  r.signals.forEach(function(s) {
+    var div = document.createElement('div');
+    div.className = 'signal-item';
+    div.innerHTML = '<span class="signal-dot ' + (s.bad ? 'dot-bad' : 'dot-ok') + '"></span><span>' + s.text + '</span>';
+    sl.appendChild(div);
+  });
+
+  wrap.style.display = 'block';
+  setTimeout(function() {
+    fill.style.width = r.auth + '%';
+    mfill.style.width = r.conf + '%';
+  }, 80);
+}
+
+// Set date
+document.getElementById('pub-date').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+</script>
+</body>
+</html>
