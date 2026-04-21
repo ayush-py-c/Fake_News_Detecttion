@@ -1,3 +1,6 @@
+<img width="955" height="1847" alt="image" src="https://github.com/user-attachments/assets/b5fafc54-5739-4590-b887-99af35ca9b7a" />
+
+
 # Fake News Detection
 
 Detect whether a news claim is likely fake or true using an NLP + machine learning pipeline, with a Flask web interface for interactive predictions.
